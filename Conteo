@@ -1,0 +1,144 @@
+#include <stm32f401xe.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+ unsigned char dato;
+ int AD_C= 0;
+ int AD_C1= 0;
+ char texto [200];
+ char textoRec [200];
+int a=0;
+int R=0;
+int i=0;
+int ii=0;
+int limite;
+
+void delay(int milliseconds) {
+    for (int j = 0; j < milliseconds*1000;++j)
+	{}
+}
+unsigned char Caracter_end='H';
+void tex (char*t) //funcion tex
+{
+	int i=0;
+	while (t[i]!= 0 )
+		
+	{
+		while(!(USART6->SR&USART_SR_TXE));
+   	USART6->DR= t[i];
+		
+		i++;
+		
+	}
+	
+}
+
+
+
+void recibirdato(unsigned char t)
+{
+		if(t!=0x0A){
+			if(ii==200){
+					ii=0;
+			}
+			if(t!=Caracter_end){
+        textoRec[ii]=t;
+			}
+			ii++;
+			
+			if(t==Caracter_end){
+					limite= atof(textoRec);
+					for(int x=ii-1;x<200;x++){
+							textoRec[x]='\0';
+					}
+					ii=0;
+			}
+			
+			
+			
+			
+		}
+    
+}
+
+
+
+
+extern "C"
+
+	void USART6_IRQHandler(void)
+	{
+		unsigned int dummy;
+  if(!(USART6->SR&USART_SR_RXNE))return;
+    // Se ejecuta interrupcion   
+    recibirdato((unsigned char)USART6->DR);
+		
+  dummy=USART6->SR; // Se limpian banderas
+  dummy=USART6->DR;
+
+}
+
+
+
+
+//		
+
+//		char texto[20];
+//dato=USART6->SR;//Limpiar banderas
+//dato=USART6->DR;//Lee dato
+//	
+//	while(!(USART6->SR&USART_SR_TXE));
+//		USART6->DR= ;
+//			
+//	
+//	}
+//}
+
+int main(void)
+
+{
+ 
+	
+	//Configuración de usart
+	RCC->AHB1ENR|=RCC_AHB1ENR_GPIOAEN;
+	RCC->AHB1ENR|=RCC_AHB1ENR_GPIOCEN;
+	RCC->AHB1ENR|=RCC_AHB1ENR_GPIOBEN;
+	GPIOB -> MODER |= 0X55555;
+	GPIOA -> MODER |= (2UL<<GPIO_MODER_MODER11_Pos);
+  GPIOA -> MODER |= (2UL<<GPIO_MODER_MODER12_Pos);
+	GPIOA -> AFR[1] |= (8UL<<GPIO_AFRH_AFSEL11_Pos);
+	GPIOA -> AFR[1] |= (8UL<<GPIO_AFRH_AFSEL12_Pos);
+	RCC->APB2ENR|= RCC_APB2ENR_USART6EN;
+  USART6->BRR=(unsigned int)(16000000/9600);
+	USART6->CR1|=(USART_CR1_RE|USART_CR1_TE);
+	USART6->CR2=0;
+	USART6->CR3=0;
+	USART6->CR1|=USART_CR1_UE;
+	NVIC_EnableIRQ(USART6_IRQn);
+	USART6->CR1|=USART_CR1_RXNEIE;
+	
+
+
+while(1)
+{
+ 
+	R=a++;
+	while(R!=limite)
+	{
+		sprintf(texto,"%d\r\n",R);
+    tex(texto);
+	dato=USART6->SR;//Limpiar banderas
+		
+for (int j = 0; j < 1500000;++j){__NOP();};
+
+if(R==limite)break;
+}
+	R=0;
+limite=0;
+while(R=limite);
+
+}
+return 0;	
+}
+
